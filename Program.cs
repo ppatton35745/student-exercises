@@ -285,16 +285,13 @@ namespace nss
             ///////////////////////////////////////////////////////////////////////////////////////
             ///////////////////////////////////////////////////////////////////////////////////////
 
-
-
-
             ///////////////////////////////////////////////////////////////////////////////////////
             ///////////////////////////////////////////////////////////////////////////////////////
             ///////////////////////////////////////////////////////////////////////////////////////
 
-            Dictionary<int, (Exercise, List<(Student, Instructor)>)> fp = new Dictionary<int, (Exercise, List<(Student, Instructor)>)>();
+            Dictionary<int, (Exercise excercise, List<(Student student, Cohort cohort, Instructor instructor)> assignments)> fp = new Dictionary<int, (Exercise, List<(Student, Cohort, Instructor)>)>();
 
-            db.Query<Exercise, Student, Instructor, Exercise>(@"
+            db.Query<Exercise, Student, Cohort, Instructor, Exercise>(@"
                 SELECT e.Id
                     ,e.name
                     ,e.Language
@@ -302,33 +299,36 @@ namespace nss
                     ,s.FirstName
                     ,s.LastName
                     ,s.SlackHandle
+                    ,c.Id
+                    ,c.Name
                     ,i.Id
                     ,i.FirstName
                     ,i.LastName
                     ,i.SlackHandle
                 FROM Exercise e
                 JOIN StudentExercise se on se.ExerciseId = e.Id
-                JOIN Student s on s.Id = se.StudentId
-                JOIN Instructor i on i.Id = se.InstructorId;
-            ", (exercise, student, instructor) =>
+                    JOIN Student s on s.Id = se.StudentId
+                        JOIN Cohort c on c.Id = s.CohortId
+                    JOIN Instructor i on i.Id = se.InstructorId;
+            ", (exercise, student, cohort, instructor) =>
             {
                 if (!fp.ContainsKey(exercise.Id))
                 {
-                    fp[exercise.Id] = (exercise, new List<(Student, Instructor)>());
+                    fp[exercise.Id] = (exercise, new List<(Student, Cohort, Instructor)>());
                 }
-                fp[exercise.Id].Item2.Add((student, instructor));
+                fp[exercise.Id].assignments.Add((student, cohort, instructor));
                 return exercise;
             });
 
             /*
                 Display the student information using the StringBuilder class
              */
-            foreach (KeyValuePair<int, (Exercise, List<(Student, Instructor)>)> exercise in fp)
+            foreach (KeyValuePair<int, (Exercise exercise, List<(Student student, Cohort cohort, Instructor instructor)> assignments)> exercise in fp)
             {
                 // Console.WriteLine($"{poop.Value.Item1.Name} has the following assignemnts:");
-                exercise.Value.Item2.ForEach(assignment =>
+                exercise.Value.assignments.ForEach(assignment =>
                 {
-                    Console.WriteLine($"{assignment.Item1.FirstName} {assignment.Item1.LastName} has {exercise.Value.Item1.Name} assigned by {assignment.Item2.FirstName} {assignment.Item2.LastName}");
+                    Console.WriteLine($"{assignment.student.FirstName} {assignment.student.LastName} from {assignment.cohort.Name} has {exercise.Value.exercise.Name} assigned by {assignment.instructor.FirstName} {assignment.instructor.LastName}");
                 });
             }
 
