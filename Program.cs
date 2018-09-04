@@ -22,6 +22,9 @@ namespace nss
             SqliteConnection db = DatabaseInterface.Connection;
             DatabaseInterface.CheckCohortTable();
             DatabaseInterface.CheckInstructorsTable();
+            DatabaseInterface.CheckExerciseTable();
+            DatabaseInterface.CheckStudentTable();
+            DatabaseInterface.CheckStudentExerciseTable();
 
             List<Instructor> instructors = db.Query<Instructor>(@"SELECT * FROM Instructor").ToList();
             instructors.ForEach(i => Console.WriteLine($"{i.FirstName} {i.LastName}"));
@@ -123,14 +126,13 @@ namespace nss
                 Console.WriteLine($"{cohort.Value.Name} has {cohort.Value.Instructors.Count} instructors.");
             }
 
-
-
-
             /*
                 Navigating a Many To Many relationship in the database is largely
                 the same process. The SQL will definitely change since you need
                 to join the two resources through the intersection table.
              */
+
+
             Dictionary<int, Student> studentExercises = new Dictionary<int, Student>();
 
             db.Query<Student, Exercise, Student>(@"
@@ -216,8 +218,123 @@ namespace nss
                 Console.WriteLine(output);
             }
 
+            ///////////////////////////////////////////////////////////////////////////////////////
+            ///////////////////////////////////////////////////////////////////////////////////////
+            ///////////////////////////////////////////////////////////////////////////////////////
+
+            Dictionary<int, Cohort> pc = new Dictionary<int, Cohort>();
+
+            db.Query<Cohort, Student, Cohort>(@"
+                SELECT c.Id 
+                    ,c.Name 
+                    ,s.Id 
+                    ,s.FirstName 
+                    ,s.LastName
+                    ,s.SlackHandle
+                FROM Cohort c
+                JOIN Student s on s.CohortId = c.Id
+            ", (cohort, student) =>
+            {
+                if (!pc.ContainsKey(cohort.Id))
+                {
+                    pc[cohort.Id] = cohort;
+                }
+                pc[cohort.Id].Students.Add(student);
+                Console.WriteLine(student.FirstName);
+                return cohort;
+            });
+
+            db.Query<Cohort, Instructor, Cohort>(@"
+                SELECT c.Id 
+                    ,c.Name 
+                    ,s.Id 
+                    ,s.FirstName 
+                    ,s.LastName
+                    ,s.SlackHandle
+                FROM Cohort c
+                JOIN Instructor s on s.CohortId = c.Id
+            ", (cohort, instructor) =>
+            {
+                if (!pc.ContainsKey(cohort.Id))
+                {
+                    pc[cohort.Id] = cohort;
+                }
+                pc[cohort.Id].Instructors.Add(instructor);
+
+                return cohort;
+            });
+
+            /*
+                Display the student information using the StringBuilder class
+             */
+            foreach (KeyValuePair<int, Cohort> co in pc)
+            {
+                Console.WriteLine($"{co.Value.Name} has the following students:");
+                co.Value.Students.ForEach(student =>
+                {
+                    Console.WriteLine($"{student.FirstName} {student.LastName}");
+                });
+                Console.WriteLine("And the following Instructors:");
+                co.Value.Instructors.ForEach(instructor =>
+                {
+                    Console.WriteLine($"{instructor.FirstName} {instructor.LastName}");
+                });
+            }
+
+            ///////////////////////////////////////////////////////////////////////////////////////
+            ///////////////////////////////////////////////////////////////////////////////////////
+            ///////////////////////////////////////////////////////////////////////////////////////
 
 
+
+
+            ///////////////////////////////////////////////////////////////////////////////////////
+            ///////////////////////////////////////////////////////////////////////////////////////
+            ///////////////////////////////////////////////////////////////////////////////////////
+
+            Dictionary<int, (Exercise, List<(Student, Instructor)>)> fp = new Dictionary<int, (Exercise, List<(Student, Instructor)>)>();
+
+            db.Query<Exercise, Student, Instructor, Exercise>(@"
+                SELECT e.Id
+                    ,e.name
+                    ,e.Language
+                    ,s.Id
+                    ,s.FirstName
+                    ,s.LastName
+                    ,s.SlackHandle
+                    ,i.Id
+                    ,i.FirstName
+                    ,i.LastName
+                    ,i.SlackHandle
+                FROM Exercise e
+                JOIN StudentExercise se on se.ExerciseId = e.Id
+                JOIN Student s on s.Id = se.StudentId
+                JOIN Instructor i on i.Id = se.InstructorId;
+            ", (exercise, student, instructor) =>
+            {
+                if (!fp.ContainsKey(exercise.Id))
+                {
+                    fp[exercise.Id] = (exercise, new List<(Student, Instructor)>());
+                }
+                fp[exercise.Id].Item2.Add((student, instructor));
+                return exercise;
+            });
+
+            /*
+                Display the student information using the StringBuilder class
+             */
+            foreach (KeyValuePair<int, (Exercise, List<(Student, Instructor)>)> exercise in fp)
+            {
+                // Console.WriteLine($"{poop.Value.Item1.Name} has the following assignemnts:");
+                exercise.Value.Item2.ForEach(assignment =>
+                {
+                    Console.WriteLine($"{assignment.Item1.FirstName} {assignment.Item1.LastName} has {exercise.Value.Item1.Name} assigned by {assignment.Item2.FirstName} {assignment.Item2.LastName}");
+                });
+            }
+
+            ///////////////////////////////////////////////////////////////////////////////////////
+            ///////////////////////////////////////////////////////////////////////////////////////
+            ///////////////////////////////////////////////////////////////////////////////////////
 
             /*
                 1. Create Exercises table and seed it

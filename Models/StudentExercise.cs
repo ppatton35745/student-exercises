@@ -20,7 +20,7 @@ namespace nss.Data
                 `InstructorId` 	INTEGER NOT NULL,
                 FOREIGN KEY(`ExerciseId`) REFERENCES `Exercise`(`Id`),
                 FOREIGN KEY(`StudentId`) REFERENCES `Student`(`Id`),
-                FOREIGN KEY(`InstructorId`) REFERENCES `Instrutor`(`Id`)
+                FOREIGN KEY(`InstructorId`) REFERENCES `Instructor`(`Id`)
             )");
         }
         public static void Seed(SqliteConnection db)
@@ -28,8 +28,8 @@ namespace nss.Data
             db.Execute($@"INSERT INTO StudentExercise
                 SELECT null, e.Id, s.Id, i.Id
                 FROM Student s, Exercise e, Instructor i
-                WHERE e.Name = 'Overly Excited'
-                AND s.SlackHandle = '@ryan.tanay'
+                WHERE e.Name = 'Duck Exe'
+                AND s.SlackHandle = 'JohnBrownSlack'
                 AND i.SlackHandle = '@coach'
             ");
 
@@ -37,8 +37,8 @@ namespace nss.Data
             db.Execute($@"INSERT INTO StudentExercise
                 SELECT null, e.Id, s.Id, i.Id
                 FROM Student s, Exercise e, Instructor i
-                WHERE e.Name = 'Overly Excited'
-                AND s.SlackHandle = '@katerebekah'
+                WHERE e.Name = 'Moose Exe'
+                AND s.SlackHandle = 'JimBeanSlack'
                 AND i.SlackHandle = '@coach'
             ");
 
@@ -46,8 +46,8 @@ namespace nss.Data
             db.Execute($@"INSERT INTO StudentExercise
                 SELECT null, e.Id, s.Id, i.Id
                 FROM Student s, Exercise e, Instructor i
-                WHERE e.Name = 'ChickenMonkey'
-                AND s.SlackHandle = '@juanrod'
+                WHERE e.Name = 'Ant Exe'
+                AND s.SlackHandle = 'AllenHurnSlack'
                 AND i.SlackHandle = '@joes'
             ");
 
@@ -55,8 +55,8 @@ namespace nss.Data
             db.Execute($@"INSERT INTO StudentExercise
                 SELECT null, e.Id, s.Id, i.Id
                 FROM Student s, Exercise e, Instructor i
-                WHERE e.Name = 'Boy Bands & Vegetables'
-                AND s.SlackHandle = '@katerebekah'
+                WHERE e.Name = 'Chimp Exe'
+                AND s.SlackHandle = 'EliManningSlack'
                 AND i.SlackHandle = '@jisie'
             ");
         }

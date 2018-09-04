@@ -69,6 +69,71 @@ namespace nss.Data
             }
         }
 
+        public static void CheckExerciseTable()
+        {
+            SqliteConnection db = DatabaseInterface.Connection;
+
+            try
+            {
+                List<Exercise> cohorts = db.Query<Exercise>
+                    ("SELECT Id FROM Exercise").ToList();
+            }
+            catch (System.Exception ex)
+            {
+                if (ex.Message.Contains("no such table"))
+                {
+                    db.Execute(@"CREATE TABLE Exercise (
+                        `Id`	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        `Name`	TEXT NOT NULL UNIQUE,
+                        `Language` TEXT
+                    )");
+
+                    db.Execute(@"INSERT INTO Exercise
+                        VALUES (null, 'Duck Exe', 'C#'),
+                        (null, 'Moose Exe', 'C#'),
+                        (null, 'Ant Exe', 'C#'),
+                        (null, 'Chimp Exe', 'JavaScript'),
+                        (null, 'Ape Exe', 'JavaScript')");
+
+                }
+            }
+        }
+
+        public static void CheckStudentTable()
+        {
+            SqliteConnection db = DatabaseInterface.Connection;
+
+            try
+            {
+                List<Student> students = db.Query<Student>
+                    ("SELECT Id FROM Student").ToList();
+            }
+            catch (System.Exception ex)
+            {
+                if (ex.Message.Contains("no such table"))
+                {
+                    db.Execute(@"CREATE TABLE Student (
+                        `Id`	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        `FirstName`	TEXT NOT NULL,
+                        `LastName` TEXT NOT NULL,
+                        `SlackHandle` TEXT NOT NULL UNIQUE,
+                        `CohortId` INTEGER NOT NULL
+
+                    )");
+
+                    db.Execute(@"INSERT INTO Student
+                        VALUES (null, 'John', 'Brown', 'JohnBrownSlack', (SELECT Id from Cohort WHERE Name = 'Day Cohort 12')),
+                        (null, 'Jim', 'Bean', 'JimBeanSlack', (SELECT Id from Cohort WHERE Name = 'Evening Cohort 1')),
+                        (null, 'Martavis', 'Bryant', 'MartavisBryantSlack', (SELECT Id from Cohort WHERE Name = 'Day Cohort 10')),
+                        (null, 'Larry', 'Fitzgerald', 'LarryFitzgeraldSlack', (SELECT Id from Cohort WHERE Name = 'Day Cohort 12')),
+                        (null, 'Allen', 'Hurns', 'AllenHurnSlack', (SELECT Id from Cohort WHERE Name = 'Day Cohort 13')),
+                        (null, 'Eli', 'Manning', 'EliManningSlack', (SELECT Id from Cohort WHERE Name = 'Day Cohort 21')),
+                        (null, 'Bruce', 'Pearl', 'BrucePearlSlack', (SELECT Id from Cohort WHERE Name = 'Day Cohort 11'))");
+
+                }
+            }
+        }
+
         public static void CheckInstructorsTable()
         {
             SqliteConnection db = DatabaseInterface.Connection;
@@ -124,5 +189,28 @@ namespace nss.Data
                 }
             }
         }
+
+        public static void CheckStudentExerciseTable()
+        {
+            SqliteConnection db = DatabaseInterface.Connection;
+            Console.WriteLine("Running Student Excercise Test");
+
+            try
+            {
+                List<StudentExercise> studentExercises = db.Query<StudentExercise>
+                    ("SELECT Id FROM StudentExercise").ToList();
+            }
+            catch (System.Exception ex)
+            {
+                if (ex.Message.Contains("no such table"))
+                {
+                    StudentExercise.Create(db);
+                    Console.WriteLine("About to Seed Student Excercise");
+                    StudentExercise.Seed(db);
+
+                }
+            }
+        }
+
     }
 }
